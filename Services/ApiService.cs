@@ -41,4 +41,34 @@ public sealed class ApiService
             return "Não foi possível consultar a API protegida.";
         }
     }
+
+    public async Task<UserProfileResponse?> GetUserAsync(string userId, string token)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"api/Users/{Uri.EscapeDataString(userId)}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        using var response = await Client.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        return await response.Content.ReadFromJsonAsync<UserProfileResponse>();
+    }
+
+    public async Task<(bool Success, string Message)> RegisterUserAsync(RegisterUserRequest request)
+    {
+        try
+        {
+            using var response = await Client.PostAsJsonAsync("api/Users/register", request);
+            if (response.IsSuccessStatusCode)
+                return (true, "Conta criada com sucesso!");
+
+            var detail = await response.Content.ReadAsStringAsync();
+            return (false, string.IsNullOrWhiteSpace(detail)
+                ? $"Não foi possível criar a conta ({(int)response.StatusCode})."
+                : detail);
+        }
+        catch
+        {
+            return (false, "Não foi possível conectar à API.");
+        }
+    }
 }

@@ -8,7 +8,7 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddHttpClient<ApiService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]
-        ?? "https://gaesdeapi-gscrfseac7fze2fs.chilecentral-01.azurewebsites.net/");
+        ?? "https://arevolucaodospet-dkf9hxc5d4dbgve2.chilecentral-01.azurewebsites.net/");
 });
 builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<AuthService>();
@@ -22,12 +22,8 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
-
 app.UseRouting();
-
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
-
 app.Run();

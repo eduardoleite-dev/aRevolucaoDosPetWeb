@@ -1,0 +1,59 @@
+@page "/cadastro"
+@layout EmptyLayout
+@inherits CadastroPage
+
+<PageTitle>Criar conta | aRevolucaoDosPetWeb</PageTitle>
+
+<main class="register-shell">
+    <section class="register-story">
+        <div class="brand"><div class="brand-mark"><span>🐾</span></div><div><span class="brand-overline">A revolução</span><strong>dos pets</strong></div></div>
+        <div class="register-story-copy">
+            <div class="eyebrow"><span class="eyebrow-dot"></span>Faça parte da matilha</div>
+            <h1>Encontre pessoas<br/>que falam a sua<br/>língua: <em>auau.</em></h1>
+            <p>Crie seu perfil, conheça novos tutores e compartilhe aventuras ao lado dos seus melhores amigos.</p>
+        </div>
+        <div class="register-social-proof"><div class="proof-avatars"><span>MC</span><span>BB</span><span>LF</span></div><div><strong>12 mil+ tutores</strong><small>já fazem parte da comunidade</small></div></div>
+        <div class="register-bubble bubble-one">🐶</div><div class="register-bubble bubble-two">🐱</div>
+    </section>
+
+    <section class="register-panel">
+        <div class="register-card">
+            <div class="mobile-brand"><div class="brand brand-compact"><div class="brand-mark"><span>🐾</span></div><div><span class="brand-overline">A revolução</span><strong>dos pets</strong></div></div></div>
+            <div class="register-heading"><span>Crie seu perfil</span><h2>Bem-vindo à matilha</h2><p>Rápido, seguro e feito para você e seu pet.</p></div>
+
+            <div class="register-steps"><div class="active"><span>1</span><small>Conta</small></div><i></i><div><span>2</span><small>Local</small></div><i></i><div><span>3</span><small>Perfil</small></div></div>
+
+            <form @onsubmit="HandleRegisterAsync" @onsubmit:preventDefault>
+                <section class="form-section">
+                    <div class="form-section-heading"><span class="form-step">01</span><div><h3>Dados de acesso</h3><p>Como você entrará na comunidade.</p></div></div>
+                    <div class="register-grid">
+                        <label class="field"><span>Nome completo *</span><input class="register-input" @bind="name" autocomplete="name" placeholder="Seu nome completo" disabled="@loading" /></label>
+                        <label class="field"><span>E-mail *</span><input class="register-input" type="email" @bind="email" autocomplete="email" placeholder="voce@email.com" disabled="@loading" /></label>
+                        <label class="field"><span>Senha *</span><div class="register-password"><input type="@(showPassword ? "text" : "password")" @bind="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" disabled="@loading" /><button type="button" @onclick="TogglePassword" aria-label="Mostrar senha">◉</button></div></label>
+                        <label class="field"><span>Confirmar senha *</span><input class="register-input" type="@(showPassword ? "text" : "password")" @bind="confirmPassword" autocomplete="new-password" placeholder="Repita sua senha" disabled="@loading" /></label>
+                    </div>
+                </section>
+
+                <section class="form-section">
+                    <div class="form-section-heading"><span class="form-step">02</span><div><h3>Sobre você</h3><p>Monte seu perfil para outros tutores.</p></div></div>
+                    <div class="avatar-field"><div class="avatar-preview">@(string.IsNullOrWhiteSpace(name) ? "U" : name.Trim()[..1].ToUpperInvariant())</div><label><span>Foto de perfil</span><input class="register-input" type="url" @bind="avatarUrl" placeholder="Cole o link da sua foto" disabled="@loading" /><small>Opcional · aparece no seu perfil</small></label></div>
+                    <div class="register-grid register-grid-compact">
+                        <label class="field"><span>Telefone</span><input class="register-input" @bind="phone" autocomplete="tel" placeholder="(11) 99999-9999" disabled="@loading" /></label>
+                        <label class="field"><span>Cidade</span><input class="register-input" @bind="city" autocomplete="address-level2" placeholder="Sua cidade" disabled="@loading" /></label>
+                        <label class="field"><span>Estado</span><input class="register-input" @bind="state" autocomplete="address-level1" placeholder="Seu estado" disabled="@loading" /></label>
+                        <label class="field"><span>País</span><input class="register-input country-input" @bind="country" autocomplete="country" maxlength="2" disabled="@loading" /></label>
+                        <label class="field"><span>Longitude</span><input class="register-input" @bind="longitude" inputmode="decimal" placeholder="-46.6333" disabled="@loading" /></label>
+                        <label class="field"><span>Latitude</span><input class="register-input" @bind="latitude" inputmode="decimal" placeholder="-23.5505" disabled="@loading" /></label>
+                        <label class="field register-bio"><span>Biografia</span><div class="bio-wrap"><textarea class="register-input" @bind="bio" maxlength="500" placeholder="Conte um pouco sobre você, seus interesses e seus pets..." disabled="@loading"></textarea><small>Máx. 500 caracteres</small></div></label>
+                    </div>
+                </section>
+
+                @if (!string.IsNullOrWhiteSpace(errorMessage)) { <p class="register-message error" role="alert">@errorMessage</p> }
+                @if (!string.IsNullOrWhiteSpace(successMessage)) { <p class="register-message success" role="status">@successMessage</p> }
+
+                <button class="primary-button register-button" type="submit" disabled="@loading"><span>@(loading ? "Criando sua conta..." : "Criar minha conta")</span><b>→</b></button>
+            </form>
+            <p class="register-login">Já faz parte da comunidade? <button class="text-button" type="button" @onclick="GoToLogin">Entrar agora</button></p>
+        </div>
+    </section>
+</main>

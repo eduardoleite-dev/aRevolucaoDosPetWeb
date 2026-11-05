@@ -12,12 +12,21 @@ public partial class IndexPage : ComponentBase
 
     protected bool publicLoading;
     protected bool privateLoading;
+    protected bool profileMenuOpen;
     protected string? publicMessage;
     protected string? privateMessage;
     protected SessionData? SessionData { get; private set; }
     protected bool HasSession => SessionData is not null;
     protected string DisplayName => SessionData?.DisplayName ?? "visitante";
-    protected string UserInitial => DisplayName[..1].ToUpperInvariant();
+    protected string UserInitial => string.IsNullOrWhiteSpace(DisplayName) ? "U" : DisplayName[..1].ToUpperInvariant();
+
+    protected void ToggleProfileMenu() => profileMenuOpen = !profileMenuOpen;
+
+    protected void OpenProfile()
+    {
+        profileMenuOpen = false;
+        Navigation.NavigateTo("/perfil");
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -25,6 +34,12 @@ public partial class IndexPage : ComponentBase
             return;
 
         SessionData = await Session.GetAsync();
+        if (SessionData is null)
+        {
+            Navigation.NavigateTo("/login", forceLoad: true);
+            return;
+        }
+
         await LoadPublicAsync();
         StateHasChanged();
     }
@@ -41,7 +56,7 @@ public partial class IndexPage : ComponentBase
         SessionData ??= await Session.GetAsync();
         if (SessionData is null)
         {
-            Navigation.NavigateTo("/login");
+            Navigation.NavigateTo("/login", forceLoad: true);
             return;
         }
 

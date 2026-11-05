@@ -9,9 +9,25 @@
 	<div class="account-area">
 		<span class="notification-dot">♧</span>
 		<div class="account-divider"></div>
-		<div class="avatar">@UserInitial</div>
+		<button class="avatar-button" @onclick="ToggleProfileMenu" aria-label="Abrir menu do usuário">
+			<span class="avatar">@UserInitial</span>
+		</button>
 		<div class="account-copy"><strong>@DisplayName</strong><span>@SessionData?.Role · nível @SessionData?.AccessLevel</span></div>
 		<button class="logout-button" @onclick="LogoutAsync">Sair</button>
+
+		@if (profileMenuOpen)
+		{
+			<div class="profile-menu">
+				<button @onclick="OpenProfile">
+					<span class="profile-menu-icon">●</span>
+					<span><strong>Ver meu perfil</strong><small>Dados da minha conta</small></span>
+				</button>
+				<button @onclick="LogoutAsync">
+					<span class="profile-menu-icon">↪</span>
+					<span><strong>Sair</strong><small>Encerrar sessão</small></span>
+				</button>
+			</div>
+		}
 	</div>
 </header>
 

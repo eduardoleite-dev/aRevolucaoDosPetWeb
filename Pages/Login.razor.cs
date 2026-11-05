@@ -8,14 +8,14 @@ public partial class LoginPage : ComponentBase
     [Inject] protected AuthService Auth { get; set; } = default!;
     [Inject] protected NavigationManager Navigation { get; set; } = default!;
 
-    protected string username = string.Empty;
-    protected string password = string.Empty;
+    protected string username = "tutor@revolucaopet.com";
+    protected string password = "petlover";
     protected string? errorMessage;
     protected bool loading;
-    protected string BannerEyebrow { get; set; } = "PLATAFORMA DE DESENVOLVIMENTO";
-    protected string BannerTitle { get; set; } = "Comece com uma base";
-    protected string BannerHighlight { get; set; } = "pronta para crescer.";
-    protected string BannerDescription { get; set; } = "Autenticação, sessão e integração com API já organizadas para você construir a próxima aplicação.";
+    protected bool showPassword;
+
+    protected void TogglePassword() => showPassword = !showPassword;
+    protected void GoToRegister() => Navigation.NavigateTo("/cadastro");
 
     protected async Task HandleLoginAsync()
     {

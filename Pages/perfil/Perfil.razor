@@ -1,0 +1,44 @@
+@page "/perfil"
+@inherits PerfilPage
+
+<PageTitle>Meu perfil | aRevolucaoDosPetWeb</PageTitle>
+
+<main class="profile-page">
+    <header class="profile-topbar">
+        <button class="profile-back" @onclick="BackToHome"><span>←</span> Voltar</button>
+        <div class="profile-session"><span class="avatar small">@UserInitial</span><button class="logout-button" @onclick="LogoutAsync">Sair</button></div>
+    </header>
+
+    @if (Loading)
+    {
+        <section class="profile-loading"><div class="profile-spinner"></div><p>Carregando perfil...</p></section>
+    }
+    else if (!string.IsNullOrWhiteSpace(ErrorMessage))
+    {
+        <section class="profile-error"><h2>Perfil indisponível</h2><p>@ErrorMessage</p><button class="profile-button" @onclick="BackToHome">Voltar ao início</button></section>
+    }
+    else if (Profile is not null)
+    {
+        <section class="profile-card">
+            <div class="profile-cover"></div>
+            <div class="profile-header">
+                @if (!string.IsNullOrWhiteSpace(Profile.AvatarUrl)) { <img class="profile-avatar" src="@Profile.AvatarUrl" alt="Foto de @DisplayName" /> }
+                else { <span class="profile-avatar profile-avatar-fallback">@UserInitial</span> }
+                <div class="profile-title"><span>PERFIL</span><h1>@DisplayName</h1><p>@(Profile.Status ?? "ACTIVE")</p></div>
+            </div>
+
+            <div class="profile-details">
+                <article><span>Nome</span><strong>@(Profile.Name ?? "Não informado")</strong></article>
+                <article><span>E-mail</span><strong>@(Profile.Email ?? "Não informado")</strong></article>
+                <article><span>Telefone</span><strong>@(Profile.Phone ?? "Não informado")</strong></article>
+                <article><span>Localização</span><strong>@(string.Join(", ", new[] { Profile.City, Profile.State, Profile.Country }.Where(value => !string.IsNullOrWhiteSpace(value))))</strong></article>
+                <article><span>Nível de acesso</span><strong>@AccessLevelName (@Profile.AccessLevel)</strong></article>
+                <article><span>Status</span><strong>@(Profile.Status ?? "Não informado")</strong></article>
+                <article><span>Criado em</span><strong>@(Profile.CreatedAt.ToString("dd/MM/yyyy HH:mm"))</strong></article>
+                <article><span>Último login</span><strong>@(Profile.LastLoginAt?.ToString("dd/MM/yyyy HH:mm") ?? "Não registrado")</strong></article>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Profile.Bio)) { <section class="profile-bio"><h2>Sobre</h2><p>@Profile.Bio</p></section> }
+        </section>
+    }
+</main>
