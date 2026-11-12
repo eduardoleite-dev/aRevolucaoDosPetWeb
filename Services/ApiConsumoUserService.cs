@@ -3,47 +3,31 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Components.Forms;
+using aRevolucaoDosPetWeb.Interfaces;
 using aRevolucaoDosPetWeb.Models;
+using aRevolucaoDosPetWeb.Util;
 
 namespace aRevolucaoDosPetWeb.Services;
 
-public sealed class ApiService
+public sealed class ApiConsumoUserService : IApiConsumoUserService
 {
     private const long MaxMediaSizeBytes = 10 * 1024 * 1024;
+    private readonly HttpClient client;
 
-    public HttpClient Client { get; }
+    public ApiConsumoUserService(HttpClient client) => this.client = client;
 
-    public ApiService(HttpClient client) => Client = client;
-
-    public async Task<string> GetPublicMessageAsync()
+    public async Task<LoginResponse?> LoginAsync(LoginRequest loginRequest)
     {
         try
         {
-            var result = await Client.GetFromJsonAsync<HelloWorldResponse>("api/HelloWorld/publico");
-            return result?.Message ?? "A API não retornou uma mensagem.";
+            using var response = await client.PostAsJsonAsync("api/Auth/login", loginRequest);
+            return response.IsSuccessStatusCode
+                ? await response.Content.ReadFromJsonAsync<LoginResponse>()
+                : null;
         }
         catch
         {
-            return "Não foi possível consultar a API pública.";
-        }
-    }
-
-    public async Task<string> GetPrivateMessageAsync(string token)
-    {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "api/HelloWorld/privado");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        try
-        {
-            using var response = await Client.SendAsync(request);
-            if (!response.IsSuccessStatusCode)
-                return $"A API recusou a chamada ({(int)response.StatusCode}).";
-
-            var result = await response.Content.ReadFromJsonAsync<HelloWorldResponse>();
-            return result is null ? "A API não retornou uma mensagem." : $"{result.Message} {result.MongoStatus}";
-        }
-        catch
-        {
-            return "Não foi possível consultar a API protegida.";
+            return null;
         }
     }
 
@@ -51,39 +35,40 @@ public sealed class ApiService
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, $"api/Users/{Uri.EscapeDataString(userId)}");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        using var response = await Client.SendAsync(request);
+        using var response = await client.SendAsync(request);
         if (!response.IsSuccessStatusCode)
             return null;
 
         return await response.Content.ReadFromJsonAsync<UserProfileResponse>();
     }
 
-    public async Task<(bool Success, string Message)> RegisterUserAsync(RegisterUserRequest request)
+    public async Task<(bool Success, string Message)> RegisterUserAsync(RegisterUserRequest registerRequest)
     {
         try
         {
-            using var response = await Client.PostAsJsonAsync("api/Users/register", request);
+            using var response = await client.PostAsJsonAsync("api/Users/register", registerRequest);
             if (response.IsSuccessStatusCode)
-                return (true, "Conta criada com sucesso!");
+                return (true, ServiceMessages.User.RegistrationSuccess);
 
             var detail = await response.Content.ReadAsStringAsync();
             return (false, string.IsNullOrWhiteSpace(detail)
-                ? $"Não foi possível criar a conta ({(int)response.StatusCode})."
+                ? ServiceMessages.User.RegistrationFailed((int)response.StatusCode)
                 : detail);
         }
         catch
         {
-            return (false, "Não foi possível conectar à API.");
+            return (false, ServiceMessages.User.ConnectionUnavailable);
         }
     }
 
-    public async Task<(bool Success, string? Url, string Message)> UploadMediaAsync(IBrowserFile file, string name = "profile-photo")
+    public async Task<(bool Success, string? Url, string Message)> UploadMediaAsync(
+        IBrowserFile file, string name = "profile-photo")
     {
         try
         {
             if (string.IsNullOrWhiteSpace(name) || name.Length > 100 ||
                 name.Any(character => !char.IsAsciiLetterOrDigit(character) && character is not '_' and not '-'))
-                return (false, null, "O nome do arquivo enviado à API não é válido.");
+                return (false, null, ServiceMessages.User.InvalidMediaName);
 
             await using var stream = file.OpenReadStream(MaxMediaSizeBytes);
             using var fileContent = new StreamContent(stream);
@@ -97,7 +82,7 @@ public sealed class ApiService
             using var request = new HttpRequestMessage(HttpMethod.Post, "api/Media/upload") { Content = form };
             request.Headers.Accept.ParseAdd("text/plain");
 
-            using var response = await Client.SendAsync(request);
+            using var response = await client.SendAsync(request);
             if (!response.IsSuccessStatusCode)
                 return (false, null, await ReadApiErrorAsync(response));
 
@@ -106,13 +91,13 @@ public sealed class ApiService
             if (!document.RootElement.TryGetProperty("url", out var urlElement) ||
                 urlElement.ValueKind != JsonValueKind.String ||
                 string.IsNullOrWhiteSpace(urlElement.GetString()))
-                return (false, null, "A API não retornou a URL da foto enviada.");
+                return (false, null, ServiceMessages.User.MediaUrlMissing);
 
-            return (true, urlElement.GetString(), "Foto enviada com sucesso.");
+            return (true, urlElement.GetString(), ServiceMessages.User.MediaUploadSuccess);
         }
-        catch (Exception)
+        catch
         {
-            return (false, null, "Não foi possível enviar a foto. Verifique o arquivo e tente novamente.");
+            return (false, null, ServiceMessages.User.MediaUploadFailed);
         }
     }
 
@@ -133,18 +118,18 @@ public sealed class ApiService
                 $"api/Users/{Uri.EscapeDataString(userId)}/photo") { Content = form };
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            using var response = await Client.SendAsync(request);
+            using var response = await client.SendAsync(request);
             if (!response.IsSuccessStatusCode)
                 return (false, null, await ReadApiErrorAsync(response));
 
             var profile = await response.Content.ReadFromJsonAsync<UserProfileResponse>();
             return profile is null
-                ? (false, null, "A API não retornou o perfil atualizado.")
-                : (true, profile, "Foto atualizada com sucesso.");
+                ? (false, null, ServiceMessages.User.UpdatedProfileMissing)
+                : (true, profile, ServiceMessages.User.PhotoUpdateSuccess);
         }
-        catch (Exception)
+        catch
         {
-            return (false, null, "Não foi possível atualizar a foto. Verifique o arquivo e tente novamente.");
+            return (false, null, ServiceMessages.User.PhotoUpdateFailed);
         }
     }
 
@@ -157,18 +142,18 @@ public sealed class ApiService
                 $"api/Users/{Uri.EscapeDataString(userId)}") { Content = JsonContent.Create(update) };
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            using var response = await Client.SendAsync(request);
+            using var response = await client.SendAsync(request);
             if (!response.IsSuccessStatusCode)
                 return (false, null, await ReadApiErrorAsync(response));
 
             var profile = await response.Content.ReadFromJsonAsync<UserProfileResponse>();
             return profile is null
-                ? (false, null, "A API não retornou os dados atualizados.")
-                : (true, profile, "Perfil atualizado com sucesso.");
+                ? (false, null, ServiceMessages.User.UpdatedUserMissing)
+                : (true, profile, ServiceMessages.User.ProfileUpdateSuccess);
         }
-        catch (Exception)
+        catch
         {
-            return (false, null, "Não foi possível atualizar o perfil.");
+            return (false, null, ServiceMessages.User.ProfileUpdateFailed);
         }
     }
 
@@ -176,7 +161,7 @@ public sealed class ApiService
     {
         var detail = await response.Content.ReadAsStringAsync();
         return string.IsNullOrWhiteSpace(detail)
-            ? $"A API recusou a solicitação ({(int)response.StatusCode})."
+            ? ServiceMessages.User.RequestRejected((int)response.StatusCode)
             : detail;
     }
 }

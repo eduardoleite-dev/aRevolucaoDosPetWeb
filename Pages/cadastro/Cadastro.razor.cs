@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
+using aRevolucaoDosPetWeb.Interfaces;
 using aRevolucaoDosPetWeb.Models;
 using aRevolucaoDosPetWeb.Services;
 using System.Globalization;
@@ -13,7 +14,7 @@ public partial class CadastroPage : ComponentBase, IAsyncDisposable
 {
     private const long MaxAvatarSizeBytes = 10 * 1024 * 1024;
 
-    [Inject] protected ApiService Api { get; set; } = default!;
+    [Inject] protected IApiConsumoUserService Api { get; set; } = default!;
     [Inject] protected NavigationManager Navigation { get; set; } = default!;
     [Inject] protected IJSRuntime JSRuntime { get; set; } = default!;
     [Inject] protected IHttpClientFactory HttpClientFactory { get; set; } = default!;

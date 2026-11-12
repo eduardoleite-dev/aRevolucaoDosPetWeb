@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
+using aRevolucaoDosPetWeb.Interfaces;
 using aRevolucaoDosPetWeb.Models;
 using aRevolucaoDosPetWeb.Services;
 
@@ -8,8 +9,8 @@ namespace aRevolucaoDosPetWeb.Pages;
 
 public partial class PerfilPage : ComponentBase, IAsyncDisposable
 {
-    [Inject] protected ApiService Api { get; set; } = default!;
-    [Inject] protected SessionService Session { get; set; } = default!;
+    [Inject] protected IApiConsumoUserService Api { get; set; } = default!;
+    [Inject] protected ISessionService Session { get; set; } = default!;
     [Inject] protected NavigationManager Navigation { get; set; } = default!;
     [Inject] protected IJSRuntime JSRuntime { get; set; } = default!;
 

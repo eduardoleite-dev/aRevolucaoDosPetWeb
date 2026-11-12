@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using aRevolucaoDosPetWeb.Interfaces;
 using aRevolucaoDosPetWeb.Models;
 using aRevolucaoDosPetWeb.Services;
 
@@ -6,8 +7,9 @@ namespace aRevolucaoDosPetWeb.Pages;
 
 public partial class IndexPage : ComponentBase
 {
-    [Inject] protected ApiService Api { get; set; } = default!;
-    [Inject] protected SessionService Session { get; set; } = default!;
+    [Inject] protected IApiConsumoService Api { get; set; } = default!;
+    [Inject] protected IApiConsumoUserService UserApi { get; set; } = default!;
+    [Inject] protected ISessionService Session { get; set; } = default!;
     [Inject] protected NavigationManager Navigation { get; set; } = default!;
 
     protected bool publicLoading;
@@ -43,7 +45,7 @@ public partial class IndexPage : ComponentBase
 
         try
         {
-            Profile = await Api.GetUserAsync(SessionData.UserId, SessionData.Token);
+            Profile = await UserApi.GetUserAsync(SessionData.UserId, SessionData.Token);
         }
         catch
         {

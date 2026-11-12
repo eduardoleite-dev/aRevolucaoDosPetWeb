@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Components;
+using aRevolucaoDosPetWeb.Interfaces;
 using aRevolucaoDosPetWeb.Services;
 
 namespace aRevolucaoDosPetWeb.Pages;
 
 public partial class LoginPage : ComponentBase
 {
-    [Inject] protected AuthService Auth { get; set; } = default!;
+    [Inject] protected IAuthService Auth { get; set; } = default!;
     [Inject] protected NavigationManager Navigation { get; set; } = default!;
 
     protected string username = "tutor@revolucaopet.com";

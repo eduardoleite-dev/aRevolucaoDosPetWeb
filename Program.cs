@@ -1,17 +1,21 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using aRevolucaoDosPetWeb.Interfaces;
 using aRevolucaoDosPetWeb.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-builder.Services.AddHttpClient<ApiService>(client =>
+void ConfigureApiClient(HttpClient client)
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]
         ?? "https://arevolucaodospet-dkf9hxc5d4dbgve2.chilecentral-01.azurewebsites.net/");
-});
-builder.Services.AddScoped<SessionService>();
-builder.Services.AddScoped<AuthService>();
+}
+
+builder.Services.AddHttpClient<IApiConsumoService, ApiConsumoService>(ConfigureApiClient);
+builder.Services.AddHttpClient<IApiConsumoUserService, ApiConsumoUserService>(ConfigureApiClient);
+builder.Services.AddScoped<ISessionService, SessionService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
 

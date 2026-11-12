@@ -1,28 +1,25 @@
-using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using aRevolucaoDosPetWeb.Interfaces;
 using aRevolucaoDosPetWeb.Models;
+using aRevolucaoDosPetWeb.Util;
 
 namespace aRevolucaoDosPetWeb.Services;
 
-public sealed class AuthService
+public sealed class AuthService : IAuthService
 {
-    private readonly ApiService api;
-    private readonly SessionService session;
+    private readonly IApiConsumoUserService apiUsers;
+    private readonly ISessionService session;
 
-    public AuthService(ApiService api, SessionService session)
+    public AuthService(IApiConsumoUserService apiUsers, ISessionService session)
     {
-        this.api = api;
+        this.apiUsers = apiUsers;
         this.session = session;
     }
 
     public async Task<bool> LoginAsync(string username, string password)
     {
-        var response = await api.Client.PostAsJsonAsync("api/Auth/login", new LoginRequest(username, password));
-        if (!response.IsSuccessStatusCode)
-            return false;
-
-        var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+        var result = await apiUsers.LoginAsync(new LoginRequest(username, password));
         if (result is null || string.IsNullOrWhiteSpace(result.Token) || result.ExpiresAt <= DateTimeOffset.UtcNow)
             return false;
 
@@ -41,19 +38,23 @@ public sealed class AuthService
         {
             var parts = token.Split('.');
             if (parts.Length < 2)
-                return ("-", "Usuário");
+                return (ServiceMessages.Auth.UnknownAccessLevel, ServiceMessages.Auth.DefaultRole);
 
             var payload = parts[1].Replace('-', '+').Replace('_', '/');
             payload = payload.PadRight(payload.Length + (4 - payload.Length % 4) % 4, '=');
             using var document = JsonDocument.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(payload)));
             var root = document.RootElement;
             return (
-                root.TryGetProperty("nivel_acesso", out var level) ? level.GetString() ?? "-" : "-",
-                root.TryGetProperty("role", out var role) ? role.GetString() ?? "Usuário" : "Usuário");
+                root.TryGetProperty("nivel_acesso", out var level)
+                    ? level.GetString() ?? ServiceMessages.Auth.UnknownAccessLevel
+                    : ServiceMessages.Auth.UnknownAccessLevel,
+                root.TryGetProperty("role", out var role)
+                    ? role.GetString() ?? ServiceMessages.Auth.DefaultRole
+                    : ServiceMessages.Auth.DefaultRole);
         }
         catch
         {
-            return ("-", "Usuário");
+            return (ServiceMessages.Auth.UnknownAccessLevel, ServiceMessages.Auth.DefaultRole);
         }
     }
 }

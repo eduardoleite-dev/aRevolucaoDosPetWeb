@@ -1,10 +1,11 @@
 using System.Text.Json;
 using Microsoft.JSInterop;
+using aRevolucaoDosPetWeb.Interfaces;
 using aRevolucaoDosPetWeb.Models;
 
 namespace aRevolucaoDosPetWeb.Services;
 
-public sealed class SessionService
+public sealed class SessionService : ISessionService
 {
     private const string StorageKey = "arquiteturaBaseWeb.session";
     private readonly IJSRuntime js;
