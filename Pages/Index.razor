@@ -10,7 +10,14 @@
 		<span class="notification-dot">♧</span>
 		<div class="account-divider"></div>
 		<button class="avatar-button" @onclick="ToggleProfileMenu" aria-label="Abrir menu do usuário">
-			<span class="avatar">@UserInitial</span>
+			@if (!string.IsNullOrWhiteSpace(Profile?.AvatarUrl))
+			{
+				<img class="avatar-image" src="@Profile.AvatarUrl" alt="Foto de @DisplayName" />
+			}
+			else
+			{
+				<span class="avatar-fallback">@UserInitial</span>
+			}
 		</button>
 		<div class="account-copy"><strong>@DisplayName</strong><span>@SessionData?.Role · nível @SessionData?.AccessLevel</span></div>
 		<button class="logout-button" @onclick="LogoutAsync">Sair</button>
@@ -33,9 +40,9 @@
 
 <main class="dashboard-content">
 	<section class="welcome-banner">
-		<div>
+				<div class="welcome-copy">
 			<p class="banner-date">Base autenticada · sessão ativa</p>
-			<h1>Olá, @DisplayName! <span>👋</span></h1>
+					<h1>Olá, @DisplayName! <span aria-hidden="true">👋</span></h1>
 			<p>Seu ambiente está pronto. Use os cartões abaixo para validar a comunicação com a API.</p>
 		</div>
 		<button class="banner-action" @onclick="LoadPrivateAsync" disabled="@privateLoading || !HasSession">

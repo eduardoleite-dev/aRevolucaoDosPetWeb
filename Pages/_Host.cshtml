@@ -10,12 +10,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <base href="~/" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%237652b8'/%3E%3Ctext x='32' y='40' text-anchor='middle' font-size='32' fill='white' font-family='Arial'%3EA%3C/text%3E%3C/svg%3E" />
-    <link href="css/site.css" rel="stylesheet" />
-    <link href="aRevolucaoDosPetWeb.styles.css" rel="stylesheet" />
+    <link href="css/site.css" rel="stylesheet" asp-append-version="true" />
+    <link href="aRevolucaoDosPetWeb.styles.css" rel="stylesheet" asp-append-version="true" />
     <component type="typeof(HeadOutlet)" render-mode="ServerPrerendered" />
 </head>
 <body>
     <component type="typeof(App)" render-mode="ServerPrerendered" />
+    <script src="js/location.js"></script>
     <script src="_framework/blazor.server.js"></script>
 </body>
 </html>

@@ -1,4 +1,6 @@
 @page "/perfil"
+@using Microsoft.AspNetCore.Components.Forms
+@implements IAsyncDisposable
 @inherits PerfilPage
 
 <PageTitle>Meu perfil | aRevolucaoDosPetWeb</PageTitle>
@@ -6,7 +8,17 @@
 <main class="profile-page">
     <header class="profile-topbar">
         <button class="profile-back" @onclick="BackToHome"><span>←</span> Voltar</button>
-        <div class="profile-session"><span class="avatar small">@UserInitial</span><button class="logout-button" @onclick="LogoutAsync">Sair</button></div>
+        <div class="profile-session">
+            @if (!string.IsNullOrWhiteSpace(Profile?.AvatarUrl))
+            {
+                <img class="profile-session-avatar" src="@Profile.AvatarUrl" alt="Foto de @DisplayName" />
+            }
+            else
+            {
+                <span class="avatar small">@UserInitial</span>
+            }
+            <button class="logout-button" @onclick="LogoutAsync">Sair</button>
+        </div>
     </header>
 
     @if (Loading)
@@ -22,10 +34,55 @@
         <section class="profile-card">
             <div class="profile-cover"></div>
             <div class="profile-header">
-                @if (!string.IsNullOrWhiteSpace(Profile.AvatarUrl)) { <img class="profile-avatar" src="@Profile.AvatarUrl" alt="Foto de @DisplayName" /> }
-                else { <span class="profile-avatar profile-avatar-fallback">@UserInitial</span> }
+                <div class="profile-avatar-area">
+                    @if (!string.IsNullOrWhiteSpace(Profile.AvatarUrl)) { <img class="profile-avatar" src="@Profile.AvatarUrl" alt="Foto de @DisplayName" /> }
+                    else { <span class="profile-avatar profile-avatar-fallback">@UserInitial</span> }
+                    <label class="profile-photo-action">
+                        <InputFile id="profile-photo-file" accept="image/*" OnChange="OnPhotoSelectedAsync" disabled="@SavingPhoto" aria-label="Selecionar nova foto de perfil" />
+                        <span aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4 8.5h3l1.5-2h7l1.5 2h3v10H4z" /><circle cx="12" cy="13.5" r="3.5" /></svg></span>
+                    </label>
+                </div>
                 <div class="profile-title"><span>PERFIL</span><h1>@DisplayName</h1><p>@(Profile.Status ?? "ACTIVE")</p></div>
             </div>
+
+            @if (SelectedPhoto is not null)
+            {
+                <div class="profile-photo-confirm">
+                    @if (!string.IsNullOrWhiteSpace(PhotoPreviewUrl)) { <img src="@PhotoPreviewUrl" alt="Prévia da nova foto" /> }
+                    <span>@SelectedPhoto.Name</span>
+                    <button class="profile-button" @onclick="UpdatePhotoAsync" disabled="@SavingPhoto">@(SavingPhoto ? "Enviando..." : "Salvar foto")</button>
+                    <button class="profile-cancel" @onclick="CancelPhotoSelection" disabled="@SavingPhoto">Cancelar</button>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(PhotoMessage))
+            {
+                <p class="profile-feedback @(PhotoSucceeded ? "success" : "error")" role="status">@PhotoMessage</p>
+            }
+
+            <div class="profile-actions">
+                <button class="profile-button" @onclick="OpenEditForm" disabled="@SavingProfile">Editar dados</button>
+            </div>
+
+            @if (Editing)
+            {
+                <form class="profile-edit-form" @onsubmit="SaveProfileAsync" @onsubmit:preventDefault>
+                    <h2>Editar perfil</h2>
+                    <div class="profile-edit-grid">
+                        <label>Nome<input @bind="EditName" maxlength="120" required /></label>
+                        <label>E-mail<input @bind="EditEmail" type="email" maxlength="254" required /></label>
+                        <label>Telefone<input @bind="EditPhone" maxlength="30" /></label>
+                        <label>Cidade<input @bind="EditCity" maxlength="100" /></label>
+                        <label>Estado<input @bind="EditState" maxlength="100" /></label>
+                        <label>País<input @bind="EditCountry" maxlength="2" /></label>
+                        <label class="profile-edit-bio">Biografia<textarea @bind="EditBio" maxlength="500"></textarea></label>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(ProfileMessage)) { <p class="profile-feedback @(ProfileSucceeded ? "success" : "error")" role="status">@ProfileMessage</p> }
+                    <div class="profile-edit-actions">
+                        <button class="profile-button" type="submit" disabled="@SavingProfile">@(SavingProfile ? "Salvando..." : "Salvar alterações")</button>
+                        <button class="profile-cancel" type="button" @onclick="CloseEditForm" disabled="@SavingProfile">Cancelar</button>
+                    </div>
+                </form>
+            }
 
             <div class="profile-details">
                 <article><span>Nome</span><strong>@(Profile.Name ?? "Não informado")</strong></article>

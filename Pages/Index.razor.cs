@@ -16,8 +16,9 @@ public partial class IndexPage : ComponentBase
     protected string? publicMessage;
     protected string? privateMessage;
     protected SessionData? SessionData { get; private set; }
+    protected UserProfileResponse? Profile { get; private set; }
     protected bool HasSession => SessionData is not null;
-    protected string DisplayName => SessionData?.DisplayName ?? "visitante";
+    protected string DisplayName => Profile?.Name ?? SessionData?.Username ?? "Tutor";
     protected string UserInitial => string.IsNullOrWhiteSpace(DisplayName) ? "U" : DisplayName[..1].ToUpperInvariant();
 
     protected void ToggleProfileMenu() => profileMenuOpen = !profileMenuOpen;
@@ -38,6 +39,15 @@ public partial class IndexPage : ComponentBase
         {
             Navigation.NavigateTo("/login", forceLoad: true);
             return;
+        }
+
+        try
+        {
+            Profile = await Api.GetUserAsync(SessionData.UserId, SessionData.Token);
+        }
+        catch
+        {
+            Profile = null;
         }
 
         await LoadPublicAsync();

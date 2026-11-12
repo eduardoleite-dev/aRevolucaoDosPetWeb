@@ -1,4 +1,6 @@
 @page "/cadastro"
+@using Microsoft.AspNetCore.Components.Forms
+@implements IAsyncDisposable
 @layout EmptyLayout
 @inherits CadastroPage
 
@@ -36,16 +38,43 @@
 
                 <section class="form-section">
                     <div class="form-section-heading"><span class="form-step">02</span><div><h3>Sobre você</h3><p>Monte seu perfil para outros tutores.</p></div></div>
-                    <div class="avatar-field"><div class="avatar-preview">@(string.IsNullOrWhiteSpace(name) ? "U" : name.Trim()[..1].ToUpperInvariant())</div><label><span>Foto de perfil</span><input class="register-input" type="url" @bind="avatarUrl" placeholder="Cole o link da sua foto" disabled="@loading" /><small>Opcional · aparece no seu perfil</small></label></div>
+                    <div class="avatar-field">
+                        <div class="avatar-preview">
+                            @if (!string.IsNullOrWhiteSpace(avatarPreviewUrl))
+                            {
+                                <img src="@avatarPreviewUrl" alt="Prévia da foto de perfil" />
+                            }
+                            else
+                            {
+                                <span>@(string.IsNullOrWhiteSpace(name) ? "U" : name.Trim()[..1].ToUpperInvariant())</span>
+                            }
+                        </div>
+                        <div class="avatar-picker">
+                            <span class="avatar-field-title">Foto de perfil</span>
+                            <label class="avatar-file-control">
+                                <InputFile id="avatar-file" class="avatar-file-input" OnChange="OnAvatarSelected" accept="image/*" aria-label="Selecionar foto de perfil" disabled="@loading" />
+                                <span class="avatar-file-button">@(avatarFile is null ? "Selecionar imagem" : "Trocar imagem")</span>
+                            </label>
+                            <small class="avatar-file-help">@(avatarFileName ?? "JPG, PNG ou WEBP · até 10 MB")</small>
+                            @if (!string.IsNullOrWhiteSpace(avatarErrorMessage)) { <small class="avatar-error" role="alert">@avatarErrorMessage</small> }
+                        </div>
+                    </div>
                     <div class="register-grid register-grid-compact">
+                        <label class="field"><span>País</span><select class="register-input" @bind="country" @bind:after="OnCountryChanged" disabled="@loading">@foreach (var countryOption in countries) { <option value="@countryOption.Code">@countryOption.Name</option> }</select></label>
+                        @if (country == "BR")
+                        {
+                            <label class="field"><span>Estado</span><select class="register-input" value="@selectedStateId" @onchange="OnStateChangedAsync" disabled="@(loading || states.Count == 0)"><option value="">Selecione seu estado</option>@foreach (var brazilState in states) { <option value="@brazilState.Id">@brazilState.Name (@brazilState.Abbreviation)</option> }</select></label>
+                            <label class="field"><span>Cidade</span><select class="register-input" @bind="city" disabled="@(loading || string.IsNullOrEmpty(selectedStateId) || loadingCities)"><option value="">@(loadingCities ? "Carregando cidades..." : "Selecione sua cidade")</option>@foreach (var brazilCity in cities) { <option value="@brazilCity">@brazilCity</option> }</select>@if (!string.IsNullOrWhiteSpace(cityMessage)) { <small class="city-error" role="alert">@cityMessage</small> }</label>
+                        }
+                        else
+                        {
+                            <label class="field"><span>Estado / Província</span><input class="register-input" @bind="state" autocomplete="address-level1" placeholder="Seu estado ou província" disabled="@loading" /></label>
+                            <label class="field"><span>Cidade</span><input class="register-input" @bind="city" autocomplete="address-level2" placeholder="Sua cidade" disabled="@loading" /></label>
+                        }
                         <label class="field"><span>Telefone</span><input class="register-input" @bind="phone" autocomplete="tel" placeholder="(11) 99999-9999" disabled="@loading" /></label>
-                        <label class="field"><span>Cidade</span><input class="register-input" @bind="city" autocomplete="address-level2" placeholder="Sua cidade" disabled="@loading" /></label>
-                        <label class="field"><span>Estado</span><input class="register-input" @bind="state" autocomplete="address-level1" placeholder="Seu estado" disabled="@loading" /></label>
-                        <label class="field"><span>País</span><input class="register-input country-input" @bind="country" autocomplete="country" maxlength="2" disabled="@loading" /></label>
-                        <label class="field"><span>Longitude</span><input class="register-input" @bind="longitude" inputmode="decimal" placeholder="-46.6333" disabled="@loading" /></label>
-                        <label class="field"><span>Latitude</span><input class="register-input" @bind="latitude" inputmode="decimal" placeholder="-23.5505" disabled="@loading" /></label>
                         <label class="field register-bio"><span>Biografia</span><div class="bio-wrap"><textarea class="register-input" @bind="bio" maxlength="500" placeholder="Conte um pouco sobre você, seus interesses e seus pets..." disabled="@loading"></textarea><small>Máx. 500 caracteres</small></div></label>
                     </div>
+                    <p class="location-note" role="status">A localização do dispositivo será adicionada ao criar sua conta.@if (!string.IsNullOrWhiteSpace(locationMessage)) { <span> @locationMessage</span> }</p>
                 </section>
 
                 @if (!string.IsNullOrWhiteSpace(errorMessage)) { <p class="register-message error" role="alert">@errorMessage</p> }
