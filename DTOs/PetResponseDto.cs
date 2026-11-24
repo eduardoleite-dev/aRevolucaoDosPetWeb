@@ -1,0 +1,45 @@
+using aRevolucaoDosPetWeb.Enums;
+using aRevolucaoDosPetWeb.Models;
+
+namespace aRevolucaoDosPetWeb.DTOs;
+
+public record PetResponseDto(
+    string Id,
+    string OwnerId,
+    IReadOnlyList<string> CoTutorIds,
+    string Name,
+    string? Username,
+    string? Bio,
+    string? AvatarUrl,
+    string? CoverUrl,
+    Species Species,
+    string? Breed,
+    Sex Sex,
+    string? Color,
+    DateTime? BirthDate,
+    DateTime? AdoptionDate,
+    decimal? WeightKg,
+    PetSize? Size,
+    string? Microchip,
+    string? Pedigree,
+    bool IsNeutered,
+    bool IsBreeder,
+    IReadOnlyList<string> Allergies,
+    IReadOnlyList<string> ChronicConditions,
+    IReadOnlyList<PetMedicationDto> ContinuousMedications,
+    string? VetName,
+    string? VetPhone,
+    string? EmergencyContactName,
+    string? EmergencyContactPhone,
+    string? HealthPlan,
+    string? HealthPlanNumber,
+    PetStatus Status,
+    PetProfileVisibility Visibility,
+    UserLocationResponse? Location,
+    int FollowersCount,
+    int FollowingCount,
+    int PostsCount,
+    DateTime CreatedAt,
+    DateTime UpdatedAt,
+    DateTime? DeletedAt
+) : IPetProfileResponse;

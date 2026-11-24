@@ -15,6 +15,7 @@ public partial class IndexPage : ComponentBase
     protected bool publicLoading;
     protected bool privateLoading;
     protected bool profileMenuOpen;
+    protected bool generalMenuOpen;
     protected string? publicMessage;
     protected string? privateMessage;
     protected SessionData? SessionData { get; private set; }
@@ -24,6 +25,19 @@ public partial class IndexPage : ComponentBase
     protected string UserInitial => string.IsNullOrWhiteSpace(DisplayName) ? "U" : DisplayName[..1].ToUpperInvariant();
 
     protected void ToggleProfileMenu() => profileMenuOpen = !profileMenuOpen;
+    protected void ToggleGeneralMenu() => generalMenuOpen = !generalMenuOpen;
+
+    protected void OpenHome()
+    {
+        generalMenuOpen = false;
+        Navigation.NavigateTo("/");
+    }
+
+    protected void OpenPets()
+    {
+        generalMenuOpen = false;
+        Navigation.NavigateTo("/pets");
+    }
 
     protected void OpenProfile()
     {

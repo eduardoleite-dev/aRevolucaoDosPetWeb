@@ -1,0 +1,337 @@
+@page "/pets"
+@using Microsoft.AspNetCore.Components.Forms
+@using aRevolucaoDosPetWeb.DTOs
+@using aRevolucaoDosPetWeb.Enums
+@inherits PetsPage
+
+<PageTitle>Pets | aRevolucaoDosPetWeb</PageTitle>
+
+<main class="pets-page">
+    <header class="pets-topbar">
+        <button class="pets-back" type="button" @onclick="BackToHome">← Início</button>
+        <div class="pets-heading">
+            <span>CADASTRO</span>
+            <h1>Pets</h1>
+        </div>
+        <button class="pets-primary" type="button" @onclick="OpenCreateForm" disabled="@Loading">
+            <span aria-hidden="true">＋</span> Cadastrar pet
+        </button>
+    </header>
+
+    <section class="pets-content">
+        <div class="pets-intro">
+            <div>
+                <h2>Seus pets</h2>
+                <p>Consulte e mantenha os cadastros atualizados.</p>
+            </div>
+            <span class="pets-count">@TotalCount @(TotalCount == 1 ? "pet" : "pets")</span>
+        </div>
+
+        <form class="pets-search" @onsubmit="SearchAsync" @onsubmit:preventDefault>
+            <label>
+                <span>Nome</span>
+                <input @bind="SearchName" @bind:event="oninput" placeholder="Buscar pelo nome" />
+            </label>
+            <button type="submit" disabled="@Loading">@(Loading ? "Buscando..." : "Buscar")</button>
+        </form>
+
+        @if (!string.IsNullOrWhiteSpace(SuccessMessage))
+        {
+            <p class="pets-feedback success" role="status">@SuccessMessage</p>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            <div class="pets-feedback error" role="alert">
+                <strong>Não foi possível carregar os pets.</strong>
+                <p>@ErrorMessage</p>
+                <button type="button" @onclick="LoadPetsAsync" disabled="@Loading">Tentar novamente</button>
+            </div>
+        }
+        else if (Loading)
+        {
+            <div class="pets-state"><span class="pets-spinner"></span><p>Carregando pets...</p></div>
+        }
+        else if (Pets.Count == 0)
+        {
+            <div class="pets-state pets-empty">
+                <span class="pets-empty-icon" aria-hidden="true">🐾</span>
+                <h3>Nenhum pet encontrado</h3>
+                <p>Cadastre um pet para começar ou ajuste a busca.</p>
+                <button class="pets-primary" type="button" @onclick="OpenCreateForm">Cadastrar primeiro pet</button>
+            </div>
+        }
+        else
+        {
+            <section class="pets-grid" aria-label="Lista de pets">
+                @foreach (var pet in Pets)
+                {
+                    <article class="pet-card" @key="pet.Id">
+                        <div class="pet-card-header">
+                            @if (!string.IsNullOrWhiteSpace(pet.AvatarUrl))
+                            {
+                                <img class="pet-avatar" src="@pet.AvatarUrl" alt="Foto de @pet.Name" />
+                            }
+                            else
+                            {
+                                <span class="pet-avatar pet-avatar-fallback" aria-hidden="true">🐾</span>
+                            }
+                            <div class="pet-card-title">
+                                <h3>@pet.Name</h3>
+                                @if (!string.IsNullOrWhiteSpace(pet.Username))
+                                {
+                                    <span>@@@pet.Username.TrimStart('@')</span>
+                                }
+                            </div>
+                            <span class="pet-status">@pet.Status</span>
+                        </div>
+
+                        <div class="pet-card-details">
+                            <span>@pet.Species @if (!string.IsNullOrWhiteSpace(pet.Breed)) { <text>· @pet.Breed</text> }</span>
+                            <span>Tutor: @pet.OwnerId</span>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(pet.Bio))
+                        {
+                            <p class="pet-bio">@pet.Bio</p>
+                        }
+
+                        <div class="pet-card-actions">
+                            <button type="button" class="pets-secondary" @onclick="() => OpenEditForm(pet)">Editar</button>
+                            <button type="button" class="pets-danger" @onclick="() => RequestDelete(pet)">Excluir</button>
+                        </div>
+                    </article>
+                }
+            </section>
+
+            <nav class="pets-pagination" aria-label="Paginação">
+                <button type="button" @onclick="PreviousPageAsync" disabled="@(Loading || PageNumber <= 1)">← Anterior</button>
+                <span>Página @PageNumber de @PageCount</span>
+                <button type="button" @onclick="NextPageAsync" disabled="@(Loading || !HasNextPage)">Próxima →</button>
+            </nav>
+        }
+    </section>
+</main>
+
+@if (FormOpen)
+{
+    <div class="pets-modal-backdrop">
+        <section class="pets-modal" role="dialog" aria-modal="true" aria-labelledby="pet-form-title">
+            <header class="pets-modal-header">
+                <div>
+                    <span>@(EditingPetId is null ? "NOVO CADASTRO" : "ATUALIZAÇÃO")</span>
+                    <h2 id="pet-form-title">@(EditingPetId is null ? "Cadastrar pet" : "Editar pet")</h2>
+                </div>
+                <button type="button" class="pets-modal-close" @onclick="CloseForm" disabled="@Saving">×</button>
+            </header>
+
+            <EditForm Model="Form" OnSubmit="SavePetAsync">
+                <div class="pets-form-grid">
+                    @if (EditingPetId is null)
+                    {
+                        <label class="pets-field">
+                            <span>ID do tutor <small>(opcional)</small></span>
+                            <InputText @bind-Value="Form.OwnerId" />
+                        </label>
+                    }
+                    else
+                    {
+                        <div class="pets-field">
+                            <span>Tutor</span>
+                            <div class="pets-readonly">@Form.OwnerId</div>
+                        </div>
+                    }
+                    <label class="pets-field">
+                        <span>Nome</span>
+                        <InputText @bind-Value="Form.Name" />
+                    </label>
+                    <label class="pets-field">
+                        <span>Usuário</span>
+                        <InputText @bind-Value="Form.Username" />
+                    </label>
+                    <label class="pets-field">
+                        <span>Espécie</span>
+                        <InputSelect @bind-Value="Form.Species">
+                            @foreach (var species in Enum.GetValues<Species>())
+                            {
+                                <option value="@species">@species</option>
+                            }
+                        </InputSelect>
+                    </label>
+                    <label class="pets-field">
+                        <span>Raça</span>
+                        <InputText @bind-Value="Form.Breed" />
+                    </label>
+                    <label class="pets-field">
+                        <span>Sexo</span>
+                        <InputSelect @bind-Value="Form.Sex">
+                            @foreach (var sex in Enum.GetValues<Sex>())
+                            {
+                                <option value="@sex">@sex</option>
+                            }
+                        </InputSelect>
+                    </label>
+                    <label class="pets-field">
+                        <span>Cor</span>
+                        <InputText @bind-Value="Form.Color" />
+                    </label>
+                    <label class="pets-field">
+                        <span>Nascimento</span>
+                        <InputDate @bind-Value="Form.BirthDate" />
+                    </label>
+                    <label class="pets-field">
+                        <span>Adoção</span>
+                        <InputDate @bind-Value="Form.AdoptionDate" />
+                    </label>
+                    <label class="pets-field">
+                        <span>Peso (kg)</span>
+                        <InputNumber @bind-Value="Form.WeightKg" />
+                    </label>
+                    <label class="pets-field">
+                        <span>Porte</span>
+                        <InputSelect @bind-Value="Form.Size">
+                            <option value="">Não informado</option>
+                            @foreach (var size in Enum.GetValues<PetSize>())
+                            {
+                                <option value="@size">@size</option>
+                            }
+                        </InputSelect>
+                    </label>
+                    <label class="pets-field">
+                        <span>Status</span>
+                        <InputSelect @bind-Value="Form.Status">
+                            @foreach (var status in Enum.GetValues<PetStatus>())
+                            {
+                                <option value="@status">@status</option>
+                            }
+                        </InputSelect>
+                    </label>
+                    <label class="pets-field">
+                        <span>Visibilidade</span>
+                        <InputSelect @bind-Value="Form.Visibility">
+                            @foreach (var visibility in Enum.GetValues<PetProfileVisibility>())
+                            {
+                                <option value="@visibility">@visibility</option>
+                            }
+                        </InputSelect>
+                    </label>
+                    <label class="pets-field">
+                        <span>Microchip</span>
+                        <InputText @bind-Value="Form.Microchip" />
+                    </label>
+                    <label class="pets-field">
+                        <span>Pedigree</span>
+                        <InputText @bind-Value="Form.Pedigree" />
+                    </label>
+                    <label class="pets-field">
+                        <span>Foto (URL)</span>
+                        <InputText @bind-Value="Form.AvatarUrl" />
+                    </label>
+                    <label class="pets-field">
+                        <span>Capa (URL)</span>
+                        <InputText @bind-Value="Form.CoverUrl" />
+                    </label>
+                    <label class="pets-field pets-field-wide">
+                        <span>Biografia</span>
+                        <InputTextArea @bind-Value="Form.Bio" />
+                    </label>
+                    <label class="pets-check">
+                        <InputCheckbox @bind-Value="Form.IsNeutered" />
+                        <span>Castrado</span>
+                    </label>
+                    <label class="pets-check">
+                        <InputCheckbox @bind-Value="Form.IsBreeder" />
+                        <span>Reprodutor</span>
+                    </label>
+                </div>
+
+                <details class="pets-extra-fields">
+                    <summary>Saúde e contatos</summary>
+                    <div class="pets-form-grid">
+                        <label class="pets-field pets-field-wide">
+                            <span>Alergias (uma por linha)</span>
+                            <InputTextArea @bind-Value="AllergiesText" />
+                        </label>
+                        <label class="pets-field pets-field-wide">
+                            <span>Condições crônicas (uma por linha)</span>
+                            <InputTextArea @bind-Value="ChronicConditionsText" />
+                        </label>
+                        <label class="pets-field">
+                            <span>Veterinário</span>
+                            <InputText @bind-Value="Form.VetName" />
+                        </label>
+                        <label class="pets-field">
+                            <span>Telefone do veterinário</span>
+                            <InputText @bind-Value="Form.VetPhone" />
+                        </label>
+                        <label class="pets-field">
+                            <span>Contato de emergência</span>
+                            <InputText @bind-Value="Form.EmergencyContactName" />
+                        </label>
+                        <label class="pets-field">
+                            <span>Telefone de emergência</span>
+                            <InputText @bind-Value="Form.EmergencyContactPhone" />
+                        </label>
+                        <label class="pets-field">
+                            <span>Plano de saúde</span>
+                            <InputText @bind-Value="Form.HealthPlan" />
+                        </label>
+                        <label class="pets-field">
+                            <span>Número do plano</span>
+                            <InputText @bind-Value="Form.HealthPlanNumber" />
+                        </label>
+                        <label class="pets-field pets-field-wide">
+                            <span>IDs de co-tutores (um por linha)</span>
+                            <InputTextArea @bind-Value="CoTutorIdsText" />
+                        </label>
+                        @if (Form.ContinuousMedications.Count > 0)
+                        {
+                            <div class="pets-field pets-field-wide">
+                                <span>Medicações contínuas (preservadas ao salvar)</span>
+                                <ul class="pets-medications">
+                                    @foreach (var medication in Form.ContinuousMedications)
+                                    {
+                                        <li>@medication.Name — @medication.Dosage, @medication.Frequency</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                </details>
+
+                @if (!string.IsNullOrWhiteSpace(FormError))
+                {
+                    <p class="pets-feedback error" role="alert">@FormError</p>
+                }
+
+                <footer class="pets-form-actions">
+                    <button class="pets-secondary" type="button" @onclick="CloseForm" disabled="@Saving">Cancelar</button>
+                    <button class="pets-primary" type="submit" disabled="@Saving">
+                        @(Saving ? "Salvando..." : EditingPetId is null ? "Cadastrar pet" : "Salvar alterações")
+                    </button>
+                </footer>
+            </EditForm>
+        </section>
+    </div>
+}
+
+@if (PendingDeletePet is not null)
+{
+    <div class="pets-modal-backdrop">
+        <section class="pets-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-pet-title">
+            <span class="pets-delete-icon" aria-hidden="true">!</span>
+            <h2 id="delete-pet-title">Excluir @PendingDeletePet.Name?</h2>
+            <p>Essa ação será enviada à API e não poderá ser desfeita.</p>
+            @if (!string.IsNullOrWhiteSpace(DeleteError))
+            {
+                <p class="pets-feedback error" role="alert">@DeleteError</p>
+            }
+            <div class="pets-form-actions">
+                <button class="pets-secondary" type="button" @onclick="CancelDelete" disabled="@Deleting">Cancelar</button>
+                <button class="pets-danger" type="button" @onclick="DeletePetAsync" disabled="@Deleting">
+                    @(Deleting ? "Excluindo..." : "Confirmar exclusão")
+                </button>
+            </div>
+        </section>
+    </div>
+}

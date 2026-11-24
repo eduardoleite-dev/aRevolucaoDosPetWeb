@@ -39,4 +39,17 @@ public static class ServiceMessages
         public const string UnknownAccessLevel = "-";
         public const string DefaultRole = "Usuário";
     }
+
+    public static class Pet
+    {
+        public const string AuthenticationRequired = "É necessário informar um token de autenticação.";
+        public const string ConnectionUnavailable = "Não foi possível conectar à API de pets.";
+        public const string InvalidResponse = "A API retornou uma resposta inválida para os dados do pet.";
+        public const string PetResponseMissing = "A API não retornou os dados do pet.";
+        public const string RequestTimedOut = "A solicitação à API de pets excedeu o tempo limite.";
+        public const string SearchResponseMissing = "A API não retornou os resultados da busca de pets.";
+
+        public static string RequestRejected(int statusCode) =>
+            $"A API de pets recusou a solicitação ({statusCode}).";
+    }
 }

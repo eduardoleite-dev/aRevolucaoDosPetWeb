@@ -4,7 +4,16 @@
 <PageTitle>Home | aRevolucaoDosPetWeb</PageTitle>
 
 <header class="app-topbar">
-	<button class="menu-button" aria-label="Abrir menu">☰</button>
+	<div class="general-menu-container">
+		<button class="menu-button" @onclick="ToggleGeneralMenu" aria-label="Abrir menu geral" aria-expanded="@generalMenuOpen">☰</button>
+		@if (generalMenuOpen)
+		{
+			<nav class="general-menu" aria-label="Menu geral">
+				<button type="button" @onclick="OpenHome">Início</button>
+				<button type="button" @onclick="OpenPets">Pets</button>
+			</nav>
+		}
+	</div>
 	<div class="search-box"><span>⌕</span><input placeholder="Buscar recursos..." aria-label="Buscar recursos" /></div>
 	<div class="account-area">
 		<span class="notification-dot">♧</span>

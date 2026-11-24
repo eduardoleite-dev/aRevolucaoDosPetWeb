@@ -14,6 +14,7 @@ void ConfigureApiClient(HttpClient client)
 
 builder.Services.AddHttpClient<IApiConsumoService, ApiConsumoService>(ConfigureApiClient);
 builder.Services.AddHttpClient<IApiConsumoUserService, ApiConsumoUserService>(ConfigureApiClient);
+builder.Services.AddHttpClient<IApiConsumoPetService, ApiConsumoPetService>(ConfigureApiClient);
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
