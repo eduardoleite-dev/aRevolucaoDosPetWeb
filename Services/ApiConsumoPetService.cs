@@ -1,8 +1,8 @@
 using System.Globalization;
-using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using aRevolucaoDosPetWeb.DTOs;
 using aRevolucaoDosPetWeb.Interfaces;
 using aRevolucaoDosPetWeb.Models;
@@ -12,7 +12,7 @@ namespace aRevolucaoDosPetWeb.Services;
 
 public sealed class ApiConsumoPetService : IApiConsumoPetService
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
     private readonly HttpClient client;
 
     public ApiConsumoPetService(HttpClient client) => this.client = client;
@@ -96,7 +96,7 @@ public sealed class ApiConsumoPetService : IApiConsumoPetService
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "api/Pets")
         {
-            Content = JsonContent.Create(requestBody)
+            Content = JsonContent.Create(requestBody, options: JsonOptions)
         };
         AddBearerToken(request, token);
 
@@ -121,7 +121,7 @@ public sealed class ApiConsumoPetService : IApiConsumoPetService
             HttpMethod.Put,
             $"api/Pets/{Uri.EscapeDataString(id)}")
         {
-            Content = JsonContent.Create(requestBody)
+            Content = JsonContent.Create(requestBody, options: JsonOptions)
         };
         AddBearerToken(request, token);
 
@@ -219,6 +219,13 @@ public sealed class ApiConsumoPetService : IApiConsumoPetService
             IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
             _ => value.ToString() ?? string.Empty
         };
+
+    private static JsonSerializerOptions CreateJsonOptions()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        options.Converters.Add(new JsonStringEnumConverter());
+        return options;
+    }
 
     private static void AddBearerToken(HttpRequestMessage request, string token) =>
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
